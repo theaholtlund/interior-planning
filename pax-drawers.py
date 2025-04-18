@@ -23,6 +23,10 @@ unique_oriented_boxes.sort(key=lambda b: b[0] * b[1], reverse=True)
 
 
 def fill_drawer(drawer_size, boxes):
+    """
+    Attempt to fill a drawer with boxes to maximise coverage.
+    Boxes are placed using a simple greedy algorithm, checking every 5mm step.
+    """
     placed_boxes = []
     occupied_areas = []
 
@@ -49,6 +53,9 @@ def fill_drawer(drawer_size, boxes):
 
 
 def draw_drawer(drawer_size, drawer_name):
+    """
+    Create a matplotlib figure representing the drawer space.
+    """
     fig, ax = plt.subplots(figsize=(drawer_size[0] / 100, drawer_size[1] / 100))
     ax.set_xlim(0, drawer_size[0])
     ax.set_ylim(0, drawer_size[1])
@@ -61,6 +68,9 @@ def draw_drawer(drawer_size, drawer_name):
 
 
 def draw_boxes(ax, layout, color="#4a90e2"):
+    """
+    Draw all the placed boxes inside the drawer layout.
+    """
     for (x, y, w, h) in layout:
         rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='black', facecolor=color)
         ax.add_patch(rect)
