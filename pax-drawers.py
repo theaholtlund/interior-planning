@@ -62,6 +62,19 @@ def main():
     layout_1 = fill_drawer(large_drawer, unique_oriented_boxes)
     layout_2 = fill_drawer(small_drawer, unique_oriented_boxes)
 
+    # Drawer 1
+    fig1, ax1 = draw_drawer(large_drawer, "Drawer 1")
+    draw_boxes(ax1, layout_1)
+    fig1.savefig("drawer_1_layout.png", dpi=300)
+
+    # Drawer 2
+    fig2, ax2 = draw_drawer(small_drawer, "Drawer 2")
+    draw_boxes(ax2, layout_2)
+    fig2.savefig("drawer_2_layout.png", dpi=300)
+
+    print(f"Drawer 1: {len(layout_1)} boxes placed.")
+    print(f"Drawer 2: {len(layout_2)} boxes placed.")
+
 
 if __name__ == "__main__":
     main()
