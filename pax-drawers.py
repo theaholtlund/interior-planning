@@ -1,13 +1,14 @@
 # Import required libraries
+import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import box as shapely_box
 
-# Define sizes for main drawers (in millimetres)
+# Define sizes for the two drawers, height x width in millimetres
 large_drawer = (928, 301)
 small_drawer = (428, 301)
 
-# Boxes available with height x width in millimetres
+# List of available smaller box sizes, height x width in millimetres
 boxes = [
     (220, 180), (180, 220), (120, 125), (350, 185), (185, 350),
     (213, 210), (120, 213), (210, 123), (350, 240), (240, 350),
@@ -15,8 +16,9 @@ boxes = [
     (280, 200), (210, 125), (155, 120), (120, 155), (95, 123)
 ]
 
-# Remove duplicates with the same area, regardless of orientation
+# Remove duplicate sizes with the same area, ignoring orientation
 unique_oriented_boxes = list({tuple(sorted((w, h))) for w, h in boxes})
+# Sort by descending area, larger boxes first
 unique_oriented_boxes.sort(key=lambda b: b[0] * b[1], reverse=True)
 
 
@@ -25,12 +27,17 @@ def fill_drawer(drawer_size, boxes):
     occupied_areas = []
 
     for box in boxes:
+        # Try both orientations, rotated and unrotated
         for orientation in [(box[0], box[1]), (box[1], box[0])]:
             w, h = orientation
             placed = False
+
+            # Try to place box at every (x, y) coordinate in 5mm steps
             for y in range(0, drawer_size[1] - h + 1, 5):
                 for x in range(0, drawer_size[0] - w + 1, 5):
                     new_box = shapely_box(x, y, x + w, y + h)
+
+                    # Check if it overlaps any already placed box
                     if all(not new_box.intersects(existing) for existing in occupied_areas):
                         occupied_areas.append(new_box)
                         placed_boxes.append((x, y, w, h))
@@ -42,12 +49,13 @@ def fill_drawer(drawer_size, boxes):
 
 
 def draw_drawer(drawer_size, drawer_name):
-    fig, ax = plt.subplots(figsize=(drawer_size[0]/100, drawer_size[1]/100))
+    fig, ax = plt.subplots(figsize=(drawer_size[0] / 100, drawer_size[1] / 100))
     ax.set_xlim(0, drawer_size[0])
     ax.set_ylim(0, drawer_size[1])
     ax.set_title(f"{drawer_name} ({drawer_size[0]} x {drawer_size[1]} mm)")
     ax.set_aspect('equal')
     ax.set_facecolor('#f0f0f0')
+    # Outline the drawer
     ax.add_patch(patches.Rectangle((0, 0), drawer_size[0], drawer_size[1], fill=False, edgecolor='black'))
     return fig, ax
 
@@ -59,21 +67,27 @@ def draw_boxes(ax, layout, color="#4a90e2"):
 
 
 def main():
-    layout_1 = fill_drawer(large_drawer, unique_oriented_boxes)
-    layout_2 = fill_drawer(small_drawer, unique_oriented_boxes)
+    # Fill each drawer with boxes
+    layout_large = fill_drawer(large_drawer, unique_oriented_boxes)
+    layout_small = fill_drawer(small_drawer, unique_oriented_boxes)
 
-    # Drawer 1
-    fig1, ax1 = draw_drawer(large_drawer, "Drawer 1")
-    draw_boxes(ax1, layout_1)
-    fig1.savefig("drawer_1_layout.png", dpi=300)
+    # Ensure output folder exists
+    output_dir = ensure_output_folder()
 
-    # Drawer 2
-    fig2, ax2 = draw_drawer(small_drawer, "Drawer 2")
-    draw_boxes(ax2, layout_2)
-    fig2.savefig("drawer_2_layout.png", dpi=300)
+    # Visualise and save layout for the large drawer
+    fig1, ax1 = draw_drawer(large_drawer, "Large Drawer")
+    draw_boxes(ax1, layout_large)
+    fig1.savefig(os.path.join(output_dir, "large_drawer_layout.png"), dpi=300)
 
-    print(f"Drawer 1: {len(layout_1)} boxes placed.")
-    print(f"Drawer 2: {len(layout_2)} boxes placed.")
+    # Visualise and save layout for the small drawer
+    fig2, ax2 = draw_drawer(small_drawer, "Small Drawer")
+    draw_boxes(ax2, layout_small)
+    fig2.savefig(os.path.join(output_dir, "small_drawer_layout.png"), dpi=300)
+
+    # Summary output
+    print(f"Large Drawer: {len(layout_large)} boxes placed.")
+    print(f"Small Drawer: {len(layout_small)} boxes placed.")
+    print(f"Layouts saved to: {output_dir}/")
 
 
 if __name__ == "__main__":
