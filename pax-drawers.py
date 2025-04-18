@@ -76,6 +76,15 @@ def draw_boxes(ax, layout, color="#4a90e2"):
         ax.add_patch(rect)
 
 
+def ensure_output_folder(folder_name="outputs"):
+    """
+    Create the outputs folder if it doesn't exist.
+    """
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    return folder_name
+
+
 def main():
     # Fill each drawer with boxes
     layout_large = fill_drawer(large_drawer, unique_oriented_boxes)
