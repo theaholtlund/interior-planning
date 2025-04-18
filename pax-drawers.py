@@ -1,13 +1,13 @@
-# Importer moduler
+# Import required libraries
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from shapely.geometry import box as shapely_box
 
-# Skuffestørrelser
-drawer_1 = (928, 301)
-drawer_2 = (428, 301)
+# Define size for main drawers
+bigdrawer = (928, 301)
+smalldrawer = (428, 301)
 
-# Tilgjengelige bokser med høyde og bredde i millimeter
+# Boxes available with heights x width in millimeters
 boxes = [
     (220, 180), (180, 220), (120, 125), (350, 185), (185, 350),
     (213, 210), (120, 213), (210, 123), (350, 240), (240, 350),
