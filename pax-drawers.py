@@ -41,6 +41,23 @@ def fill_drawer(drawer_size, boxes):
     return placed_boxes
 
 
+def draw_drawer(drawer_size, drawer_name):
+    fig, ax = plt.subplots(figsize=(drawer_size[0]/100, drawer_size[1]/100))
+    ax.set_xlim(0, drawer_size[0])
+    ax.set_ylim(0, drawer_size[1])
+    ax.set_title(f"{drawer_name} ({drawer_size[0]} x {drawer_size[1]} mm)")
+    ax.set_aspect('equal')
+    ax.set_facecolor('#f0f0f0')
+    ax.add_patch(patches.Rectangle((0, 0), drawer_size[0], drawer_size[1], fill=False, edgecolor='black'))
+    return fig, ax
+
+
+def draw_boxes(ax, layout, color="#4a90e2"):
+    for (x, y, w, h) in layout:
+        rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='black', facecolor=color)
+        ax.add_patch(rect)
+
+
 def main():
     layout_1 = fill_drawer(large_drawer, unique_oriented_boxes)
     layout_2 = fill_drawer(small_drawer, unique_oriented_boxes)
