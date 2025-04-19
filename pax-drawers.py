@@ -1,16 +1,13 @@
 # Import required libraries
 import os
-import random
-import json
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from shapely.geometry import box as shapely_box
 
 # Define drawer sizes (width, height)
 large_drawer = (928, 301)
 small_drawer = (428, 301)
 
-# Define box sizes (width, height)
+# Define all box sizes (width, height)
 boxes = [
     (60, 120), (120, 60), (95, 123), (95, 125), (120, 125), (120, 155), (120, 213),
     (123, 95), (123, 210), (125, 95), (155, 120), (180, 220), (185, 350),
@@ -18,41 +15,61 @@ boxes = [
     (240, 350), (245, 355), (280, 200), (350, 185), (350, 240),
     (355, 245), (365, 240)
 ]
-unique_boxes = sorted({(min(w, h), max(w, h)) for w, h in boxes}, key=lambda b: b[0] * b[1], reverse=True)
 
-# Show the unique box sizes
-print("Unique inner box sizes, height x width:")
-for h, w in unique_boxes:
-    print(f"  {h} x {w}")
+# Identify the 3 smallest for gap filling
+filler_box_set = {(60, 120), (95, 123), (95, 125)}
+main_box_set = {b for b in boxes if b not in filler_box_set}
 
-# Visualisation color
+# Normalise orientation
+main_boxes = [tuple(sorted(b)) for b in main_box_set]
+filler_boxes = [tuple(sorted(b)) for b in filler_box_set]
+
 box_color = "#e8a6b1"
 
 
-def place_boxes_grid(drawer_size, boxes):
+def ensure_output_folder(folder_name="outputs"):
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
+    return folder_name
+
+
+def can_place(grid, x, y, w, h, drawer_w, drawer_h):
+    if x + w > drawer_w or y + h > drawer_h:
+        return False
+    return all(not grid[x + dx][y + dy] for dx in range(w) for dy in range(h))
+
+
+def mark_occupied(grid, x, y, w, h):
+    for dx in range(w):
+        for dy in range(h):
+            grid[x + dx][y + dy] = True
+
+
+def place_boxes(drawer_size, box_sizes, grid=None, max_repeats=999):
     width, height = drawer_size
-    grid = [[False for _ in range(height)] for _ in range(width)]
+    if grid is None:
+        grid = [[False for _ in range(height)] for _ in range(width)]
     placed_boxes = []
 
-    def can_place(x, y, w, h):
-        if x + w > width or y + h > height:
-            return False
-        return all(not grid[x + dx][y + dy] for dx in range(w) for dy in range(h))
+    for box in sorted(box_sizes, key=lambda b: b[0] * b[1], reverse=True):
+        w, h = box
+        count = 0
+        while count < max_repeats:
+            placed = False
+            for x in range(0, width - w + 1):
+                for y in range(0, height - h + 1):
+                    if can_place(grid, x, y, w, h, width, height):
+                        placed_boxes.append((x, y, w, h))
+                        mark_occupied(grid, x, y, w, h)
+                        placed = True
+                        break
+                if placed:
+                    break
+            if not placed:
+                break
+            count += 1
 
-    def mark_occupied(x, y, w, h):
-        for dx in range(w):
-            for dy in range(h):
-                grid[x + dx][y + dy] = True
-
-    for w, h in boxes:
-        for x in range(width):
-            for y in range(height):
-                if can_place(x, y, w, h):
-                    placed_boxes.append((x, y, w, h))
-                    mark_occupied(x, y, w, h)
-                    break  # Place one and move on
-
-    return placed_boxes
+    return placed_boxes, grid
 
 
 def draw_layout(drawer_size, layout, name, save_path):
@@ -74,40 +91,52 @@ def draw_layout(drawer_size, layout, name, save_path):
     plt.close(fig)
 
 
-def ensure_output_folder(folder_name="outputs"):
-    if not os.path.exists(folder_name):
-        os.makedirs(folder_name)
-    return folder_name
+def generate_best_layout(drawer_size):
+    best_layout = []
+    best_area = 0
+
+    for _ in range(3):
+        grid = [[False for _ in range(drawer_size[1])] for _ in range(drawer_size[0])]
+
+        layout_main, grid = place_boxes(drawer_size, main_boxes, grid)
+        layout_fillers, _ = place_boxes(drawer_size, filler_boxes, grid)
+
+        total_layout = layout_main + layout_fillers
+        used_area = sum(w * h for (_, _, w, h) in total_layout)
+
+        if used_area > best_area:
+            best_area = used_area
+            best_layout = total_layout
+
+    return best_layout
 
 
-output_dir = ensure_output_folder()
+def run_layouts():
+    output_dir = ensure_output_folder()
+    summaries = {}
 
-# Generate 3 layouts per drawer with shuffled box order
-summaries = {}
-for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
-    for i in range(1, 4):
-        shuffled = unique_boxes.copy()
-        random.shuffle(shuffled)
-        layout = place_boxes_grid(drawer_size, shuffled)
-        filename = f"{drawer_name}_{i}"
-        draw_layout(drawer_size, layout, filename.replace("_", " ").title(),
-                    os.path.join(output_dir, f"{filename}.png"))
+    for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
+        for i in range(1, 4):
+            layout = generate_best_layout(drawer_size)
+            filename = f"{drawer_name}_{i}"
+            save_path = os.path.join(output_dir, f"{filename}.png")
+            draw_layout(drawer_size, layout, filename.replace("_", " ").title(), save_path)
 
-        area_used = sum(w * h for (_, _, w, h) in layout)
-        drawer_area = drawer_size[0] * drawer_size[1]
-        summaries[filename] = {
-            "boxes_used": len(layout),
-            "area_used_mm2": area_used,
-            "drawer_area_mm2": drawer_area,
-            "fill_percentage": round(100 * area_used / drawer_area, 2)
-        }
+            area_used = sum(w * h for (_, _, w, h) in layout)
+            drawer_area = drawer_size[0] * drawer_size[1]
+            fill_percentage = round(100 * area_used / drawer_area, 2)
 
-# Print summaries
-print("\nSummary of Layouts:")
-for name, stats in summaries.items():
-    print(f"  {name}: {stats['fill_percentage']}% fill with {stats['boxes_used']} boxes "
-          f"({stats['area_used_mm2']} mm² used of {stats['drawer_area_mm2']} mm²)")
+            summaries[filename] = {
+                "boxes_used": len(layout),
+                "area_used_mm2": area_used,
+                "drawer_area_mm2": drawer_area,
+                "fill_percentage": fill_percentage
+            }
 
-# Optional: Save to JSON for reference
-with open(os.path.join(output_dir, "summaries.json"), "w") as f:
-    json.dump(summaries, f, indent=4)
+    print("\nSummary of Layouts:")
+    for name, stats in summaries.items():
+        print(f"  {name}: {stats['fill_percentage']}% fill with {stats['boxes_used']} boxes "
+              f"({stats['area_used_mm2']} mm² used of {stats['drawer_area_mm2']} mm²)")
+
+
+run_layouts()
