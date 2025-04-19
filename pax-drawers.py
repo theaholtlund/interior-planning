@@ -3,11 +3,11 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-# Define drawer sizes (width, height in mm)
+# Define drawer sizes, with width and height in mm
 large_drawer = (928, 301)
 small_drawer = (428, 301)
 
-# Define available box sizes (width, height in mm)
+# Define available box sizes, with width and height in mm
 boxes = [
     (60, 120), (95, 123), (95, 125), (120, 60), (120, 125), (120, 155),
     (120, 213), (123, 95), (123, 210), (125, 95), (125, 215), (155, 120),
@@ -16,44 +16,40 @@ boxes = [
     (355, 245), (365, 240)
 ]
 
-# Separate out smaller boxes that can be used as "filler"
+# Separate out smaller boxes that can be used as "filler" boxes
 filler_box_set = {(60, 120), (95, 123), (95, 125)}
 
-# Normalize box orientation (shortest side = height), and separate main vs filler
+# Normalise box orientation (shortest side = height), and separate main vs filler
 main_boxes = [tuple(sorted(b)) for b in boxes if b not in filler_box_set]
 filler_boxes = [tuple(sorted(b)) for b in boxes if b in filler_box_set]
 
 # Color used for boxes in the output image
 box_color = "#e8a6b1"
 
-# Ensure output folder exists to store layout images
-
 
 def ensure_output_folder(folder_name="outputs"):
+    """Ensure output folder exists to store layout images."""
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
     return folder_name
 
-# Check if a box can be placed at (x, y) without going outside drawer or overlapping
-
 
 def can_place(grid, x, y, w, h, dw, dh):
+    """Check if a box can be placed at (x, y) without going outside drawer or overlapping."""
     if x + w > dw or y + h > dh:
         return False
     return all(not grid[x + dx][y + dy] for dx in range(w) for dy in range(h))
 
-# Mark a section of the grid as occupied after placing a box
-
 
 def mark_occupied(grid, x, y, w, h):
+    """Mark a section of the grid as occupied after placing a box"""
     for dx in range(w):
         for dy in range(h):
             grid[x + dx][y + dy] = True
 
-# Greedy box placement: try to fit boxes one by one, rotating if needed
-
 
 def place_boxes(drawer_size, sorted_boxes):
+    """Greedy box placement,try to fit boxes one by one and rotate if needed."""
     dw, dh = drawer_size
     grid = [[False] * dh for _ in range(dw)]  # 2D occupancy grid
     layout = []
@@ -75,10 +71,9 @@ def place_boxes(drawer_size, sorted_boxes):
 
     return layout  # Return list of placed boxes with position and size
 
-# Draw and save the layout as a .png file
-
 
 def draw_layout(drawer_size, layout, name, save_path):
+    """Draw and save the layout as a png file."""
     fig, ax = plt.subplots(figsize=(drawer_size[0] / 100, drawer_size[1] / 100))
     ax.set_xlim(0, drawer_size[0])
     ax.set_ylim(0, drawer_size[1])
@@ -95,11 +90,9 @@ def draw_layout(drawer_size, layout, name, save_path):
     fig.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-# Try different layout strategies and generate visual + summary outputs
-
 
 def run_strategies():
-    # Three strategies: prioritize large area, tall height, or wide width
+    """Three strategies: prioritize large area, tall height, or wide width."""
     strategies = {
         "area": sorted(main_boxes, key=lambda b: b[0] * b[1], reverse=True),
         "height": sorted(main_boxes, key=lambda b: b[1], reverse=True),
