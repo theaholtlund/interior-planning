@@ -52,24 +52,22 @@ def place_boxes(drawer_size, box_sizes, grid=None, max_repeats=999):
     placed_boxes = []
 
     for box in sorted(box_sizes, key=lambda b: b[0] * b[1], reverse=True):
-        orientations = [box, (box[1], box[0])]
-        for orientation in orientations:
-            w, h = orientation
-            count = 0
-            while count < max_repeats:
-                placed = False
-                for x in range(0, width - w + 1):
-                    for y in range(0, height - h + 1):
-                        if can_place(grid, x, y, w, h, width, height):
-                            placed_boxes.append((x, y, w, h))
-                            mark_occupied(grid, x, y, w, h)
-                            placed = True
-                            break
-                    if placed:
+        w, h = box
+        count = 0
+        while count < max_repeats:
+            placed = False
+            for x in range(0, width - w + 1):
+                for y in range(0, height - h + 1):
+                    if can_place(grid, x, y, w, h, width, height):
+                        placed_boxes.append((x, y, w, h))
+                        mark_occupied(grid, x, y, w, h)
+                        placed = True
                         break
-                if not placed:
+                if placed:
                     break
-                count += 1
+            if not placed:
+                break
+            count += 1
 
     return placed_boxes, grid
 
@@ -93,30 +91,63 @@ def draw_layout(drawer_size, layout, name, save_path):
     plt.close(fig)
 
 
-def generate_best_layout(drawer_size):
-    best_layouts = []
-    width, height = drawer_size
+def layout_signature(layout):
+    return tuple(sorted((w, h) for _, _, w, h in layout))
 
-    for _ in range(6):  # Try multiple variations
-        grid = [[False for _ in range(height)] for _ in range(width)]
-        layout_main, grid = place_boxes(drawer_size, main_boxes, grid)
-        layout_fillers, _ = place_boxes(drawer_size, filler_boxes, grid)
+
+def generate_unique_best_layouts(drawer_size, num_layouts=3):
+    best_layouts = []
+    seen_signatures = set()
+
+    # Use varied sorting strategies to help generate diverse layouts
+    sorting_strategies = [
+        lambda b: -b[0] * b[1],  # by area
+        lambda b: -max(b),      # by max dimension
+        lambda b: -min(b),      # by min dimension
+        lambda b: b[0],         # by width
+        lambda b: b[1],         # by height
+    ]
+
+    attempts = 0
+    while len(best_layouts) < num_layouts and attempts < 20:
+        strategy = sorting_strategies[attempts % len(sorting_strategies)]
+
+        grid = [[False for _ in range(drawer_size[1])] for _ in range(drawer_size[0])]
+        ordered_main = sorted(main_boxes, key=strategy)
+        ordered_fillers = sorted(filler_boxes, key=strategy)
+
+        layout_main, grid = place_boxes(drawer_size, ordered_main, grid)
+        layout_fillers, _ = place_boxes(drawer_size, ordered_fillers, grid)
         layout_total = layout_main + layout_fillers
         used_area = sum(w * h for (_, _, w, h) in layout_total)
-        best_layouts.append((used_area, layout_total))
 
-    # Return top 3 layouts
+        sig = layout_signature(layout_total)
+        if sig not in seen_signatures:
+            seen_signatures.add(sig)
+            best_layouts.append((used_area, layout_total))
+
+        attempts += 1
+
     best_layouts.sort(key=lambda x: x[0], reverse=True)
-    return [layout for _, layout in best_layouts[:3]]
+    return [layout for _, layout in best_layouts]
+
+
+def print_unique_box_sizes():
+    all_boxes = [tuple(sorted(b)) for b in boxes]
+    unique_boxes = sorted(set(all_boxes))
+    print("Unique box sizes (HxW):")
+    for w, h in unique_boxes:
+        print(f"  {h} x {w}")
 
 
 def run_layouts():
+    print_unique_box_sizes()
     output_dir = ensure_output_folder()
     summaries = {}
 
     for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
-        layouts = generate_best_layout(drawer_size)
-        for i, layout in enumerate(layouts, start=1):
+        layouts = generate_unique_best_layouts(drawer_size, num_layouts=3)
+        for i, layout in enumerate(layouts, 1):
             filename = f"{drawer_name}_{i}"
             save_path = os.path.join(output_dir, f"{filename}.png")
             draw_layout(drawer_size, layout, filename.replace("_", " ").title(), save_path)
@@ -138,4 +169,5 @@ def run_layouts():
               f"({stats['area_used_mm2']} mm² used of {stats['drawer_area_mm2']} mm²)")
 
 
+# Run it!
 run_layouts()
