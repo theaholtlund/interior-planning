@@ -52,22 +52,24 @@ def place_boxes(drawer_size, box_sizes, grid=None, max_repeats=999):
     placed_boxes = []
 
     for box in sorted(box_sizes, key=lambda b: b[0] * b[1], reverse=True):
-        w, h = box
-        count = 0
-        while count < max_repeats:
-            placed = False
-            for x in range(0, width - w + 1):
-                for y in range(0, height - h + 1):
-                    if can_place(grid, x, y, w, h, width, height):
-                        placed_boxes.append((x, y, w, h))
-                        mark_occupied(grid, x, y, w, h)
-                        placed = True
+        orientations = [box, (box[1], box[0])]
+        for orientation in orientations:
+            w, h = orientation
+            count = 0
+            while count < max_repeats:
+                placed = False
+                for x in range(0, width - w + 1):
+                    for y in range(0, height - h + 1):
+                        if can_place(grid, x, y, w, h, width, height):
+                            placed_boxes.append((x, y, w, h))
+                            mark_occupied(grid, x, y, w, h)
+                            placed = True
+                            break
+                    if placed:
                         break
-                if placed:
+                if not placed:
                     break
-            if not placed:
-                break
-            count += 1
+                count += 1
 
     return placed_boxes, grid
 
@@ -92,23 +94,20 @@ def draw_layout(drawer_size, layout, name, save_path):
 
 
 def generate_best_layout(drawer_size):
-    best_layout = []
-    best_area = 0
+    best_layouts = []
+    width, height = drawer_size
 
-    for _ in range(3):
-        grid = [[False for _ in range(drawer_size[1])] for _ in range(drawer_size[0])]
-
+    for _ in range(6):  # Try multiple variations
+        grid = [[False for _ in range(height)] for _ in range(width)]
         layout_main, grid = place_boxes(drawer_size, main_boxes, grid)
         layout_fillers, _ = place_boxes(drawer_size, filler_boxes, grid)
+        layout_total = layout_main + layout_fillers
+        used_area = sum(w * h for (_, _, w, h) in layout_total)
+        best_layouts.append((used_area, layout_total))
 
-        total_layout = layout_main + layout_fillers
-        used_area = sum(w * h for (_, _, w, h) in total_layout)
-
-        if used_area > best_area:
-            best_area = used_area
-            best_layout = total_layout
-
-    return best_layout
+    # Return top 3 layouts
+    best_layouts.sort(key=lambda x: x[0], reverse=True)
+    return [layout for _, layout in best_layouts[:3]]
 
 
 def run_layouts():
@@ -116,8 +115,8 @@ def run_layouts():
     summaries = {}
 
     for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
-        for i in range(1, 4):
-            layout = generate_best_layout(drawer_size)
+        layouts = generate_best_layout(drawer_size)
+        for i, layout in enumerate(layouts, start=1):
             filename = f"{drawer_name}_{i}"
             save_path = os.path.join(output_dir, f"{filename}.png")
             draw_layout(drawer_size, layout, filename.replace("_", " ").title(), save_path)
