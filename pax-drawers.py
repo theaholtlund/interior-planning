@@ -89,6 +89,7 @@ def draw_layout(drawer_size, layout, name, save_path):
     plt.axis('off')
     fig.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
+    print(f"    → Saved layout image: {save_path}")
 
 
 def run_strategies():
@@ -102,10 +103,11 @@ def run_strategies():
     output_dir = ensure_output_folder()
     summaries = {}
 
+    print("Beginning layout generation...\n")
+
     for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
-        for i, (strategy, box_order) in enumerate(strategies.items(), start=1):
-            # Multiply filler boxes to make them available in abundance
-            layout = place_boxes(drawer_size, box_order + filler_boxes * 50)
+        print(f"Processing {drawer_name.replace('_', ' ').title()}...")
+        layouts = place_boxes(drawer_size, main_boxes)
 
             # Calculate fill statistics
             used_area = sum(w * h for (_, _, w, h) in layout)
@@ -124,9 +126,11 @@ def run_strategies():
                 "total_mm²": total_area,
             }
 
-    # Print out summary of all layouts
+    print("\nSummary of results:")
     for name, stat in summaries.items():
         print(f"{name}: {stat['fill_percent']}% fill | {stat['boxes']} boxes")
+
+    print("\n✅ All layouts generated and saved.")
 
 
 # Run everything
