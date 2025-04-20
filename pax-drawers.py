@@ -42,14 +42,14 @@ def can_place(grid, x, y, w, h, dw, dh):
 
 
 def mark_occupied(grid, x, y, w, h):
-    """Mark a section of the grid as occupied after placing a box"""
+    """Mark a section of the grid as occupied after placing a box."""
     for dx in range(w):
         for dy in range(h):
             grid[x + dx][y + dy] = True
 
 
-def place_boxes(drawer_size, sorted_boxes):
-    """Greedy box placement,try to fit boxes one by one and rotate if needed."""
+def place_boxes(drawer_size, sorted_boxes, max_results=3):
+    """Attempt to place boxes in a drawer using greedy strategies."""
     dw, dh = drawer_size
     grid = [[False] * dh for _ in range(dw)]  # 2D occupancy grid
     layout = []
@@ -73,7 +73,7 @@ def place_boxes(drawer_size, sorted_boxes):
 
 
 def draw_layout(drawer_size, layout, name, save_path):
-    """Draw and save the layout as a png file."""
+    """Draw and save the layout as a PNG image."""
     fig, ax = plt.subplots(figsize=(drawer_size[0] / 100, drawer_size[1] / 100))
     ax.set_xlim(0, drawer_size[0])
     ax.set_ylim(0, drawer_size[1])
@@ -93,7 +93,7 @@ def draw_layout(drawer_size, layout, name, save_path):
 
 
 def run_strategies():
-    """Three strategies: prioritize large area, tall height, or wide width."""
+    """Run all placement strategies for each drawer size and generate visualisations."""
     strategies = {
         "area": sorted(main_boxes, key=lambda b: b[0] * b[1], reverse=True),
         "height": sorted(main_boxes, key=lambda b: b[1], reverse=True),
