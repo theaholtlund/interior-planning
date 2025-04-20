@@ -11,6 +11,11 @@ This projects helps in preparing to move, for example by visualising how to best
 ```bash
 python -m venv venv
 source venv/bin/activate
+```
+
+### 3. Run the project
+
+```bash
 pip install -r requirements.txt
 python pax-drawers.py
 ```
