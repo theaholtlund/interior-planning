@@ -1,8 +1,10 @@
-# Drawer Organisation with Python
+# 📦 Drawer Organisation with Python
 
-This projects helps in preparing to move, for example by visualising how to best fill some IKEA PAX drawers with various boxes to maximise area covered.
+This project helps visualise how to optimally pack various box sizes into IKEA PAX drawers, ideal for moving or organising efficiently hehe.
 
-## Get Started
+---
+
+## 🚀 Get Started
 
 ### 1. Clone the repo
 
