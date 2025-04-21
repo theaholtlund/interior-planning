@@ -16,7 +16,7 @@ boxes = [
     (355, 245), (365, 240)
 ]
 
-# Separate out smaller boxes that can be used as "filler" boxes
+# Separate out smaller boxes that can be used as filler boxes
 filler_box_set = {(60, 120), (95, 123), (95, 125)}
 
 # Normalise box orientation (shortest side = height), and separate main vs filler
@@ -106,7 +106,7 @@ def run_strategies():
     print("Beginning layout generation...\n")
 
     for drawer_name, drawer_size in [("large_drawer", large_drawer), ("small_drawer", small_drawer)]:
-        print(f"Processing {drawer_name.replace('_', ' ').title()}...")
+        print(f"Processing {drawer_name.replace('_', ' ')}...")
         layouts = place_boxes(drawer_size, main_boxes)
 
         for rank, (strategy_name, layout, used_area) in enumerate(layouts, start=1):
