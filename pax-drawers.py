@@ -109,15 +109,13 @@ def run_strategies():
         print(f"Processing {drawer_name.replace('_', ' ').title()}...")
         layouts = place_boxes(drawer_size, main_boxes)
 
-            # Calculate fill statistics
-            used_area = sum(w * h for (_, _, w, h) in layout)
+        for rank, (strategy_name, layout, used_area) in enumerate(layouts, start=1):
             total_area = drawer_size[0] * drawer_size[1]
             fill_pct = round(100 * used_area / total_area, 2)
 
-            # Save layout image and collect summary
-            filename = f"{drawer_name}_{i}_{strategy}"
+            filename = f"{drawer_name}_{rank}_{strategy_name}"
             path = os.path.join(output_dir, f"{filename}.png")
-            draw_layout(drawer_size, layout, filename.replace("_", " ").title(), path)
+            draw_layout(drawer_size, layout, f"{drawer_name.replace('_', ' ').title()} #{rank}", path)
 
             summaries[filename] = {
                 "fill_percent": fill_pct,
