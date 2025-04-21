@@ -133,5 +133,5 @@ def run_strategies():
     print("\n✅ All layouts generated and saved.")
 
 
-# Run everything
-run_strategies()
+if __name__ == "__main__":
+    run_strategies()
