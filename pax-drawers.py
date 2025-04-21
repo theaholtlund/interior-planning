@@ -48,7 +48,7 @@ def mark_occupied(grid, x, y, w, h):
             grid[x + dx][y + dy] = True
 
 
-def place_boxes(drawer_size, sorted_boxes, max_results=3):
+def place_boxes(drawer_size, max_results=3):
     """Attempt to place boxes in a drawer using greedy strategies."""
     dw, dh = drawer_size
     grid = [[False] * dh for _ in range(dw)]  # 2D occupancy grid
