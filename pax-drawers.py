@@ -100,9 +100,9 @@ def draw_layout(drawer_size, layout, name, save_path):
     fig, ax = plt.subplots(figsize=(drawer_size[0] / 100, drawer_size[1] / 100))
     ax.set_xlim(0, drawer_size[0])
     ax.set_ylim(0, drawer_size[1])
-    ax.set_title(name)
+    ax.set_title(name, fontsize=10)
     ax.set_aspect('equal')
-    ax.set_facecolor('#f5f5f5')
+    ax.set_facecolor('#f0f0f0')
     ax.add_patch(patches.Rectangle((0, 0), *drawer_size, fill=False, edgecolor='black'))
 
     for (x, y, w, h) in layout:
