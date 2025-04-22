@@ -51,25 +51,48 @@ def mark_occupied(grid, x, y, w, h):
 def place_boxes(drawer_size, max_results=3):
     """Attempt to place boxes in a drawer using greedy strategies."""
     dw, dh = drawer_size
-    grid = [[False] * dh for _ in range(dw)]  # 2D occupancy grid
-    layout = []
+    best_layouts = []
 
-    for box in sorted_boxes:
-        for (w, h) in [(box[0], box[1]), (box[1], box[0])]:  # Try both rotations
-            for y in range(dh - h + 1):
-                for x in range(dw - w + 1):
-                    if can_place(grid, x, y, w, h, dw, dh):
-                        mark_occupied(grid, x, y, w, h)
-                        layout.append((x, y, w, h))
-                        break  # Break once placed
+    def try_layout(box_order):
+        """Try to place boxes based on a given box order."""
+        grid = [[False] * dh for _ in range(dw)]
+        layout = []
+
+        for box in box_order + filler_boxes * 50:
+            for (w, h) in [(box[0], box[1]), (box[1], box[0])]:
+                for y in range(dh - h + 1):
+                    for x in range(dw - w + 1):
+                        if can_place(grid, x, y, w, h, dw, dh):
+                            mark_occupied(grid, x, y, w, h)
+                            layout.append((x, y, w, h))
+                            break
+                    else:
+                        continue
+                    break
                 else:
                     continue
                 break
-            else:
-                continue
-            break
 
-    return layout  # Return list of placed boxes with position and size
+        used_area = sum(w * h for (_, _, w, h) in layout)
+        return layout, used_area
+
+    attempts = {
+        "area": sorted(main_boxes, key=lambda b: b[0] * b[1], reverse=True),
+        "height": sorted(main_boxes, key=lambda b: b[1], reverse=True),
+        "width": sorted(main_boxes, key=lambda b: b[0], reverse=True),
+    }
+
+    print(f"Starting placement strategies for drawer size {drawer_size[0]}x{drawer_size[1]} mm...")
+
+    for strategy_name, box_order in attempts.items():
+        print(f"  Trying strategy: {strategy_name}")
+        layout, used_area = try_layout(box_order)
+        print(f"    → Strategy '{strategy_name}' used area: {used_area} mm²")
+        best_layouts.append((strategy_name, layout, used_area))
+
+    best_layouts.sort(key=lambda x: x[2], reverse=True)
+    print(f"Top {max_results} layouts selected.\n")
+    return best_layouts[:max_results]
 
 
 def draw_layout(drawer_size, layout, name, save_path):
