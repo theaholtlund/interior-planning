@@ -117,12 +117,6 @@ def draw_layout(drawer_size, layout, name, save_path):
 
 def run_strategies():
     """Run all placement strategies for each drawer size and generate visualisations."""
-    strategies = {
-        "area": sorted(main_boxes, key=lambda b: b[0] * b[1], reverse=True),
-        "height": sorted(main_boxes, key=lambda b: b[1], reverse=True),
-        "width": sorted(main_boxes, key=lambda b: b[0], reverse=True),
-    }
-
     output_dir = ensure_output_folder()
     summaries = {}
 
