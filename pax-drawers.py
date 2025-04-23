@@ -106,8 +106,8 @@ def draw_layout(drawer_size, layout, name, save_path):
     ax.add_patch(patches.Rectangle((0, 0), *drawer_size, fill=False, edgecolor='black'))
 
     for (x, y, w, h) in layout:
-        ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=0.5, edgecolor='black', facecolor=box_color))
-        ax.text(x + w / 2, y + h / 2, f"{w}x{h}", color="white", fontsize=7, ha="center", va="center")
+        ax.add_patch(patches.Rectangle((x, y), w, h, linewidth=0.3, edgecolor='black', facecolor=box_color))
+        ax.text(x + w / 2, y + h / 2, f"{w}×{h}", color="white", fontsize=6, ha="center", va="center")
 
     plt.axis('off')
     fig.savefig(save_path, dpi=300, bbox_inches='tight')
